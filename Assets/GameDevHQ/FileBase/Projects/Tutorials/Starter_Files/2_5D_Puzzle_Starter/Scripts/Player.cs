@@ -21,6 +21,8 @@ public class Player : MonoBehaviour
     private UIManager _uiManager;
     [SerializeField]
     private int _lives = 3;
+    private bool _canWallJump;
+    private Vector3 _hitNormal;
 
     // Start is called before the first frame update
     void Start()
@@ -51,10 +53,18 @@ public class Player : MonoBehaviour
         }
         else
         {
-            if (Input.GetKeyDown(KeyCode.Space) && _canDoubleJump == true)
+            if (Input.GetKeyDown(KeyCode.Space) && _canDoubleJump == true && _canWallJump == false)
             {
                 _yVelocity = _jumpHeight;
                 _canDoubleJump = false;
+            }
+            else if (_canWallJump == true & Input.GetKeyDown(KeyCode.Space))
+            {
+                Debug.Log("Hit normal " + _hitNormal);
+                _xVelocity = _jumpHeight * _hitNormal.x;
+                _yVelocity = _jumpHeight;
+                _canWallJump = false;
+                _hitNormal = Vector3.zero;
             }
             else
             {
@@ -62,11 +72,24 @@ public class Player : MonoBehaviour
             }
         }
  
-        _xVelocity = Input.GetAxis("Horizontal") * _speed;
+        if (_controller.isGrounded == true)
+        {
+            _xVelocity = Input.GetAxis("Horizontal") * _speed;
+        }
+
         _playerVelocity = new Vector3(_xVelocity, _yVelocity, 0f);
         _controller.Move(_playerVelocity * Time.deltaTime);
     }
 
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (_controller.isGrounded == false && hit.transform.CompareTag("Wall"))
+        {
+            Debug.DrawRay(hit.point, hit.normal, Color.blue);
+            _canWallJump = true;
+            _hitNormal = hit.normal;
+        }
+    }
     public void AddCoins()
     {
         _coins++;
