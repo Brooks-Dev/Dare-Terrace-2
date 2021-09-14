@@ -21,8 +21,10 @@ public class Player : MonoBehaviour
     private UIManager _uiManager;
     [SerializeField]
     private int _lives = 3;
+    [SerializeField]
     private bool _canWallJump;
     private Vector3 _hitNormal;
+    private float _pushPower = 2f;
 
     // Start is called before the first frame update
     void Start()
@@ -44,6 +46,7 @@ public class Player : MonoBehaviour
         if (_controller.isGrounded == true && _yVelocity < 0)
         {
             _yVelocity = 0f;
+            _xVelocity = 0f;
         }
 
         if (_controller.isGrounded == true && Input.GetKeyDown(KeyCode.Space))
@@ -83,13 +86,23 @@ public class Player : MonoBehaviour
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
+        Rigidbody body = hit.collider.attachedRigidbody;
+
         if (_controller.isGrounded == false && hit.transform.CompareTag("Wall"))
         {
             Debug.DrawRay(hit.point, hit.normal, Color.blue);
             _canWallJump = true;
             _hitNormal = hit.normal;
         }
+
+        if (body == null || body.isKinematic) return;
+        if (hit.transform.CompareTag("MovableBox") && hit.moveDirection.y >= -0.3f)
+        {
+            Vector3 pushDir = new Vector3(hit.moveDirection.x, 0f, 0f);
+            body.velocity = pushDir * _pushPower;
+        }
     }
+
     public void AddCoins()
     {
         _coins++;
